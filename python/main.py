@@ -8,9 +8,19 @@ import asyncio, json
 app = FastAPI()
 
 # Cors configurations
+
+origins = [
+    "http://192.168.107.160",
+    "http://192.168.107.160:80",
+    "http://192.168.107.160:8080",
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:8080"
+]
+
 app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"]

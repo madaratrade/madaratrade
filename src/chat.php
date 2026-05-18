@@ -13,7 +13,8 @@ if(!isset($_SESSION['user_id'])) {
 $sender_id = $_SESSION['user_id'];
 $username  = $_SESSION['username'];
 $uuid      = $_SESSION['uuid'];
-$receiver_id = $_GET['user'] ?? 2;
+$receiver_id = $_GET['user_id'] ?? null;
+
 
 $chat_id = $sender_id < $receiver_id
 	    ? "{$sender_id}_{$receiver_id}"
@@ -34,7 +35,7 @@ $chats = json_decode($response, true);
 <?php
 // تابع کمکی برای پیدا کردن مسیر عکس
 function getAvatar($avatarFromDb) {
-    $default = "/uploads/default-avatar.png"; // مسیر عکس پیش‌فرض تو
+    $default = "uploads/default-avatar.png"; // مسیر عکس پیش‌فرض تو
         
             // اگر در دیتابیس خالی بود یا فایل وجود نداشت
     if (empty($avatarFromDb)) {
@@ -54,6 +55,9 @@ function getAvatar($avatarFromDb) {
 <head>
 <meta charset="UTF-8">
 <title>Messenger</title>
+
+
+
 
 
 <style>
@@ -78,7 +82,6 @@ height:100vh;
 }
 
 
-/* CHAT LIST */
 
 .chat-list{
 flex:1;
@@ -264,11 +267,9 @@ cursor:pointer;
         width: 350px;
         height: 100vh;
         background: var(--sidebar-bg);
-        display: flex;
         flex-direction: column;
         border-right: 1px solid #0e1621;
         color: var(--text-color);
-        position: fixed;
         left: 0;
         top: 0;
     }
@@ -370,19 +371,50 @@ cursor:pointer;
     }
 </style>
 
+
+<style>
+
+.main-wrapper{
+    display:flex;
+    height:100vh;
+    width: 100%;
+}
+
+.sidebar{
+    width:350px;
+    min-width:350px;
+}
+
+.chat-area{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+.messages{
+    flex:1;
+    overflow-y:auto;
+}
+
+
+</style>
+
 </head>
 
 <body>
 
 <div class="app">
 
+
+<div class="main-wrapper">
+     
 <!-- SIDEBAR -->
 
 
 <div class="sidebar">
     <div class="sidebar-header">
         <!-- آیکون پروفایل خودت کنار Chats -->
-        <img src="/uploads/default-avatar.png" class="my-profile-icon" onclick="location.href='profile.php'">
+        <img src="uploads/default-avatar.png" class="my-profile-icon" onclick="location.href='profile.php'">
         <h2>Chats</h2>
         <div class="header-actions">
             <i class="fas fa-search"></i>
@@ -398,10 +430,10 @@ cursor:pointer;
                 $is_active = (isset($_GET['user_id']) && $_GET['user_id'] == $uid) ? 'active' : '';
             ?>
                 <div class="chat-item <?= $is_active ?>" 
-                     onclick="location.href='chat.php?chat_id=<?= $chat['chat_id'] ?>&user_id=<?= $uid ?>'">
+                     onclick="location.href='chat.php?user_id=<?= $uid ?>'">
                     
                     <div class="avatar-container">
-                        <img src="<?= $avatar_url ?>" class="chat-avatar" onerror="this.src='/uploads/default-avatar.png'">
+                        <img src="<?= $avatar_url ?>" class="chat-avatar" onerror="this.src='uploads/default-avatar.png'">
                     </div>
 
                     <div class="chat-info">
@@ -433,9 +465,7 @@ cursor:pointer;
 <input id="msg" placeholder="Write a message">
 <button onclick="sendMessage()">Send</button>
 </div>
-
 </div>
-
 </div>
 
 <!-- Modal Background -->
@@ -457,7 +487,7 @@ cursor:pointer;
         <!-- Profile Section -->
         <div class="profile-main">
             <div class="avatar-container" onclick="viewPhoto()">
-                <img id="user-avatar" src="src/uploads/default-avatar.png" alt="Profile">
+                <img id="user-avatar" src="uploads/default-avatar.png" alt="Profile">
                 <div class="add-photo-icon">&#128247;</div>
             </div>
             
@@ -511,7 +541,7 @@ cursor:pointer;
 
 <script>
 async function loadChats(){
-	  const res = await fetch(`http://fastapi:8000/chats/${sender_id}`);
+	  const res = await fetch(`http://" + window.location.hostname  + ":8000/chats/${sender_id}`);
 	  const chats = await res.json();
 	  
 	  const list = document.querySelector(".chat-list");
@@ -563,7 +593,7 @@ function addMessage(text,isSelf,time){
 
 async function loadMessages(){
 
-	const res=await fetch("http://fastapi:8000/messages/"+chat_id);
+	const res=await fetch("http://" + window.location.hostname  + ":8000/messages/"+chat_id);
 
 	const data=await res.json();
 
@@ -582,7 +612,7 @@ async function loadMessages(){
 
 /* websocket */
 
-const ws=new WebSocket("ws://192.168.107.160/ws/"+sender_id);
+const ws=new WebSocket("ws://" + window.location.hostname + ":8000/ws/"+sender_id);
 
 ws.onmessage=e=>{
 
@@ -662,7 +692,7 @@ function deletePhoto() {
             method: 'POST',
             body: JSON.stringify({ action: 'delete_photo' })
         }).then(res => res.json()).then(data => {
-            if(data.success) document.getElementById('user-avatar').src = 'src/uploads/default-avatar.png';
+            if(data.success) document.getElementById('user-avatar').src = 'uploads/default-avatar.png';
         });
     }
 }
@@ -679,7 +709,7 @@ function uploadPhoto(input) {
             body: formData
         }).then(res => res.json()).then(data => {
             if(data.success) {
-                document.getElementById('user-avatar').src = 'src/uploads/' + data.filename;
+                document.getElementById('user-avatar').src = 'uploads/' + data.filename;
             }
         });
     }
@@ -695,9 +725,9 @@ function viewPhoto() {
     alert("Photo viewer بخش بعدی است. اگر خواستی برات کاملش می‌سازم.");
 }
 
-function openChat(chat_id, user_id) {
-    window.location.href = "chat.php?chat_id=" + chat_id + "&user_id=" + user_id;
-}
+// function openChat(chat_id, user_id) {
+//     window.location.href = "chat.php?chat_id=" + chat_id + "&user_id=" + user_id;
+// }
 
 
 </script>
