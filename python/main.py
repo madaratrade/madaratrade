@@ -45,33 +45,77 @@ def get_messages(chat_id: str):
 
 
 # Get chats from mongodb
+#@app.get("/chats/{user_id}")
+#def get_chats(user_id: int):
+#    pipeline = [
+#        {"$match": {"$or": [
+#            {"$sender_id": user_id},
+#            {"$receiver_id": user_id}
+#        ]}},
+#
+#        {"$sort": {"timestamp": 1}},
+#        {"group": {
+#            "_id": "$chat_id",
+#            "last_message": {"$first": "$message"},
+#            "timestamp": {"first": "$timestamp"},
+#            "sender_id": {"first": "$sender_id"},
+#            "receiver_id": {"first": "$receiver_id"}
+#        }}
+#    ]
+#
+#    chats = list(messages.aggregate(pipeline))
+#
+#    return [{
+#        "chat_id": c["_id"],
+#        "user_id": c["receiver_id"] if c["sender_id"] == user_id else c["sender_id"],
+#        "last_message": c["last_message"],
+#        "timestamp": c["timestamp"]
+#    } for c in chats]
+
 @app.get("/chats/{user_id}")
 def get_chats(user_id: int):
-    pipeline = [
-        {"$match": {"$or": [
-            {"$sender_id": user_id},
-            {"$receiver_id": user_id}
-        ]}},
 
-        {"$sort": {"timestamp": 1}},
-        {"group": {
-            "_id": "$chat_id",
-            "last_message": {"$first": "$message"},
-            "timestamp": {"first": "$timestamp"},
-            "sender_id": {"first": "$sender_id"},
-            "receiver_id": {"first": "$receiver_id"}
-        }}
+    pipeline = [
+
+        {
+            "$match": {
+                "$or": [
+                    {"sender_id": user_id},
+                    {"receiver_id": user_id}
+                ]
+            }
+        },
+
+        {"$sort": {"timestamp": -1}},
+
+        {
+            "$group": {
+                "_id": "$chat_id",
+                "last_message": {"$first": "$message"},
+                "timestamp": {"$first": "$timestamp"},
+                "sender_id": {"$first": "$sender_id"},
+                "receiver_id": {"$first": "$receiver_id"}
+            }
+        }
+
     ]
 
     chats = list(messages.aggregate(pipeline))
 
-    return [{
-        "chat_id": c["_id"],
-        "user_id": c["receiver_id"] if c["sender_id"] == user_id else c["sender_id"],
-        "last_message": c["last_message"],
-        "timestamp": c["timestamp"]
-    } for c in chats]
+    result = []
 
+    for c in chats:
+
+        other_user = c["receiver_id"] if c["sender_id"] == user_id else c["sender_id"]
+
+        result.append({
+            "chat_id": c["_id"],
+            "user_id": other_user,
+            "last_message": c["last_message"],
+            "timestamp": str(c["timestamp"])
+            })
+
+    return result
 
 # Online users
 @app.get("/online")
