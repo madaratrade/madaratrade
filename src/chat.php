@@ -94,7 +94,15 @@ $my_avatar   = !empty($avatar_raw) ? "uploads/" . $avatar_raw : "uploads/default
 <title>Messenger</title>
 
 
+<style>
+#profileAvatar {
+width: 120px;
+height: 120px;
+border-radius: 50%;
+object-fit: cover;
+}
 
+</style>
 
 
 <style>
@@ -524,7 +532,15 @@ cursor:pointer;
         <!-- Profile Section -->
         <div class="profile-main">
             <div class="avatar-container" onclick="viewPhoto()">
-	    <img id="user-avatar" src="<?= $my_avatar ?>" onerror="this.src='uploads/default-avatar.png'" alt="Profile">
+	    <!-- <img id="user-avatar" src="<?= $my_avatar ?>" onerror="this.src='uploads/default-avatar.png'" alt="Profile"> -->
+            <img 
+                id="user-avatar"
+                src="<?php echo htmlspecialchars($my_avatar); ?>" 
+                alt="Profile"
+                onclick="document.getElementById('profilePicInput').click()"
+                style="cursor:pointer;"
+            >
+
                 <div class="add-photo-icon">&#128247;</div>
             </div>
             
@@ -813,6 +829,54 @@ function saveBio() {
 
 
 </script>
+
+<input type="file" id="profilePicInput" accept="image/*" style="display:none;">
+
+
+<script>
+document.getElementById("profilePicInput").addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("user-avatar", file);
+
+    try {
+        const res = await fetch("upload_profile_picture.php", {
+            method: "POST",
+            body: formData
+        });
+
+        const text = await res.text();
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            alert("Server error:\n" + text);
+            return;
+        }
+
+        if (data.status === "success") {
+            const newAvatar = data.file + "?t=" + new Date().getTime();
+
+            const profileAvatar = document.getElementById("profileAvatar");
+            const sidebarAvatar = document.getElementById("sidebarAvatar");
+
+            if (profileAvatar) profileAvatar.src = newAvatar;
+            if (sidebarAvatar) sidebarAvatar.src = newAvatar;
+
+            alert("Profile picture updated successfully.");
+        } else {
+            alert(data.message || "Upload failed.");
+        }
+    } catch (err) {
+        alert("Request failed.");
+        console.error(err);
+    }
+});
+</script>
+
 
 </body>
 </html>

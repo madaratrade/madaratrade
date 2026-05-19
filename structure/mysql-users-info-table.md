@@ -1,7 +1,7 @@
 ```bash
 CREATE TABLE `users_info` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `user_id` BIGINT NOT NULL,
+  `user_id` BIGINT NOT NULL UNIQUE,
   `profile_picture` VARCHAR(255) DEFAULT NULL,
   `bio` TEXT DEFAULT NULL,
   `links` TEXT DEFAULT NULL,
