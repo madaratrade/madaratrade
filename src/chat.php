@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+$user_id = $_SESSION['user_id'] ?? null;
+$bio = $_POST['bio'] ?? "";
+
+include "db.php";
 #ini_set('display_errors', 1);
 #ini_set('display_startup_errors', 1);
 #error_reporting(E_ALL);
@@ -11,6 +15,7 @@ if(!isset($_SESSION['user_id'])) {
 }
 
 $sender_id = $_SESSION['user_id'];
+$bio     = $_POST['bio'] ?? "";
 $username  = $_SESSION['username'];
 $uuid      = $_SESSION['uuid'];
 $receiver_id = $_GET['user_id'] ?? null;
@@ -47,7 +52,39 @@ function getAvatar($avatarFromDb) {
 }
 ?>
 
+<?php
 
+# Extract data from users_account table
+$sql = "SELECT first_name, last_name, username, phone_number 
+	        FROM users_account 
+		        WHERE id = ?";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$account = $stmt->get_result()->fetch_assoc();
+
+# Etract photo and bio from users_info table (It could be empty)
+$sql2 = "SELECT profile_picture, bio 
+	         FROM users_info 
+		          WHERE user_id = ?";
+
+$stmt2 = $conn->prepare($sql2);
+$stmt2->bind_param("i", $user_id);
+$stmt2->execute();
+$info = $stmt2->get_result()->fetch_assoc();
+
+# Preparing data to use
+$my_name     = ($account['first_name'] ?? '') . " " . ($account['last_name'] ?? '');
+$my_username = $account['username'] ?? "unknown";
+$my_phone    = $account['phone_number'] ?? "N/A";
+$my_bio      = $info['bio'] ?? "No bio yet...";
+
+# Photo
+$avatar_raw  = $info['profile_picture'] ?? "";
+$my_avatar   = !empty($avatar_raw) ? "uploads/" . $avatar_raw : "uploads/default-avatar.png";
+
+?>
 
 
 <!DOCTYPE html>
@@ -414,7 +451,7 @@ cursor:pointer;
 <div class="sidebar">
     <div class="sidebar-header">
         <!-- آیکون پروفایل خودت کنار Chats -->
-        <img src="uploads/default-avatar.png" class="my-profile-icon" onclick="location.href='profile.php'">
+        <img src="uploads/default-avatar.png" class="my-profile-icon" onclick="openProfile()">
         <h2>Chats</h2>
         <div class="header-actions">
             <i class="fas fa-search"></i>
@@ -487,22 +524,22 @@ cursor:pointer;
         <!-- Profile Section -->
         <div class="profile-main">
             <div class="avatar-container" onclick="viewPhoto()">
-                <img id="user-avatar" src="uploads/default-avatar.png" alt="Profile">
+	    <img id="user-avatar" src="<?= $my_avatar ?>" onerror="this.src='uploads/default-avatar.png'" alt="Profile">
                 <div class="add-photo-icon">&#128247;</div>
             </div>
             
             <div class="user-main-info">
-                <h3 id="display-name">Name</h3>
-                <p id="display-phone-user">@username | +phone</p>
+	        <h3 id="display-name"><?= htmlspecialchars($my_name) ?></h3>
+		<p id="display-phone-user">@<?= htmlspecialchars($my_username) ?> | +<?= htmlspecialchars($my_phone) ?></p>
             </div>
         </div>
 
         <!-- Content List -->
         <div class="profile-list">
-            <div class="list-item clickable" onclick="editBio()">
+            <div class="list-item clickable" onclick="saveBio()">
                 <div class="item-icon">ℹ️</div>
                 <div class="item-text">
-                    <span id="bio-text">No bio yet...</span>
+		    <span id="bio-text"><?= htmlspecialchars($my_bio) ?></span>
                     <small>درباره من</small>
                 </div>
             </div>
@@ -668,22 +705,6 @@ function triggerUpload() {
     document.getElementById('photo-input').click();
 }
 
-// Edit bio directly
-function editBio() {
-    let currentBio = document.getElementById('bio-text').innerText;
-    let newBio = prompt("Write your bio:", currentBio);
-	        
-    if (newBio !== null) {
-	
-	// Send to server with fetch
-        fetch('api/update_profile.php', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'update_bio', bio: newBio })
-        }).then(res => res.json()).then(data => {
-            if(data.success) document.getElementById('bio-text').innerText = newBio;
-    });
-  }
-}
 
 // Remove photo with confirmation
 function deletePhoto() {
@@ -725,9 +746,70 @@ function viewPhoto() {
     alert("Photo viewer بخش بعدی است. اگر خواستی برات کاملش می‌سازم.");
 }
 
+
+function openProfile() {
+    document.getElementById("profile-modal").style.display = "flex";
+}
+
 // function openChat(chat_id, user_id) {
 //     window.location.href = "chat.php?chat_id=" + chat_id + "&user_id=" + user_id;
 // }
+//
+
+
+// Edit bio directly
+//function editBio() {
+//    let currentBio = document.getElementById('bio-text').innerText;
+//    let newBio = prompt("Write your bio:", currentBio);
+//	        
+//    if (newBio !== null) {
+//	
+//	// Send to server with fetch
+//        fetch('update_bio.php', {
+//            method: 'POST',
+//            body: JSON.stringify({ action: 'update_bio', bio: newBio })
+//        }).then(res => res.json()).then(data => {
+//            if(data.success) document.getElementById('bio-text').innerText = newBio;
+//    });
+//  }
+//}
+//
+//function saveBio() {
+//    const newBio = document.getElementById("bio-input").value;
+//
+//    fetch("update_bio.php", {
+//        method: "POST",
+//        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+//        body: "bio=" + encodeURIComponent(newBio)
+//    })
+//    .then(res => res.text())
+//    .then(msg => {
+//        console.log(msg);
+//        document.getElementById("bio-text").innerText = newBio;
+//        alert("Bio saved!");
+//    });
+//}
+
+function saveBio() {
+
+    const bio = prompt("Enter your bio:");
+
+    if (bio === null) return;
+
+    console.log(bio);
+    
+    fetch("update_bio.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "bio=" + encodeURIComponent(bio)
+    })
+    .then(res => res.text())
+    .then(data => console.log(data));
+
+}
+
 
 
 </script>
