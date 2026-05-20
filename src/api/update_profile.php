@@ -1,8 +1,9 @@
 <?php
 session_start();
 
+
 // Connect to database file route
-include '../db_connection.php';
+include '../db.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);

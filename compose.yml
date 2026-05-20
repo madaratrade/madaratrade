@@ -10,9 +10,12 @@ volumes:
 
 services:
   
+
+   
   nginx:
     image: nginx:alpine
     container_name: ammighorbani-nginx
+    restart: always
     ports:
       - 80:80
     volumes:
@@ -21,14 +24,14 @@ services:
 
     extra_hosts:
         - "host.docker.internal:host-gateway"
-    depends_on:
-      - php
 
   php:
     build: ./php
     container_name: ammighorbani-php
     volumes:
       - ./src:/var/www/html
+    depends_on:
+      - nginx
         
   fastapi:
     build: ./python
@@ -41,7 +44,6 @@ services:
     depends_on:
       - mongodb
       - redis
-
 
   mysql:
     image: mysql:8.0

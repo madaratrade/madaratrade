@@ -1,7 +1,8 @@
 <?php
 session_start();
 
-include 'db.php';
+
+include '../db.php';
 
 header('Content-Type: application/json');
 
@@ -41,7 +42,7 @@ if ($file['error'] !== UPLOAD_ERR_OK) {
 	        exit;
 }
 
-$allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+$allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime = finfo_file($finfo, $file['tmp_name']);
 finfo_close($finfo);
@@ -57,10 +58,10 @@ if (!in_array($mime, $allowed_types)) {
 $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
 $filename = "profile_" . $user_id . "_" . time() . "." . $ext;
 
-$upload_dir = __DIR__ . "uploads/";
-if (!is_dir($upload_dir)) {
-	    mkdir($upload_dir, 0777, true);
-}
+$upload_dir = __DIR__ . "/../uploads/";
+#if (!is_dir($upload_dir)) {
+#	    mkdir($upload_dir, 0777, true);
+#}
 
 $target_path = $upload_dir . $filename;
 
