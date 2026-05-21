@@ -139,7 +139,7 @@ def online():
 def get_unseen_counts(user_id: int):
 
     pipeline = [
-        {"$match": {"receiver_id": user_id, "seen": false}},
+        {"$match": {"receiver_id": user_id, "seen": False}},
         {"$group": {"_id": "$chat_id", "count": {"$sum": 1}}}
     ]
 
@@ -205,15 +205,15 @@ async def websocket_endpoint(websocket: WebSocket, receiver_id: str):
 def mark_messages_as_seen(chat_id, receiver_id):
     
     result = db.messages.update_many(
-        {"chat_id": chat_id, "receiver_id": receiver_id, "seen": false},
-        {"$set": {"seen": true}}
+        {"chat_id": chat_id, "receiver_id": receiver_id, "seen": False},
+        {"$set": {"seen": True}}
     )
     return result.modified_count  # Count of messages were updated
 
 
 def get_unseen_counts(my_user_id):
     pipeline = [
-        {"$match": {"receiver_id": my_user_id, "seen": false}},
+        {"$match": {"receiver_id": my_user_id, "seen": False}},
         {"$group": {"_id": "$chat_id", "count": {"$sum": 1}}}
     ]
     results = list(db.messages.aggregate(pipeline))
