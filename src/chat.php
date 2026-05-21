@@ -29,11 +29,52 @@ $chat_id = $sender_id < $receiver_id
 
 <?php
 
+$current_user_id = $_SESSION['user_id'];
+
+$api_url = "http://fastapi:8000/unseen/" . $current_user_id;
+
+$response = file_get_contents($api_url);
+
+$unseen_data = json_decode($response, true);
+
+if (!$unseen_data) {
+    $unseen_data = [];
+}
+
+
+?>
+
+<?php
+
 $api_url = "http://fastapi:8000/chats/" . $sender_id;
 
 $response = file_get_contents($api_url);
 
 $chats = json_decode($response, true);
+
+?>
+
+<?php
+
+$chat_user_ids = array_column($chats, 'user_id');
+
+$user_data_map = [];
+if (!empty($chat_user_ids)) {
+    $ids_string = implode(',', array_map('intval', $chat_user_ids));
+        
+    $query = "SELECT ua.id, ua.first_name, ua.last_name, ui.profile_picture 
+              FROM users_account ua 
+              LEFT JOIN users_info ui ON ua.id = ui.user_id 
+              WHERE ua.id IN ($ids_string)";
+                  
+    $result = $conn->query($query);
+    while ($row = $result->fetch_assoc()) {
+        $user_data_map[$row['id']] = [
+            'name' => trim(($row['first_name'] ?? '') . " " . ($row['last_name'] ?? '')),
+            'avatar' => !empty($row['profile_picture']) ? "uploads/" . $row['profile_picture'] : "uploads/default-avatar.png"
+        ];
+    }
+}
 
 ?>
 
@@ -86,6 +127,34 @@ $my_avatar   = !empty($avatar_raw) ? "uploads/" . $avatar_raw : "uploads/default
 
 ?>
 
+<?php
+
+$user_data_map = [];
+
+$sql = "
+SELECT ua.id, ua.first_name, ua.last_name, ui.profile_picture
+FROM users_account ua
+LEFT JOIN users_info ui ON ua.id = ui.user_id
+";
+
+$result = $conn->query($sql);
+
+while ($row = $result->fetch_assoc()) {
+
+	    $name = trim(($row['first_name'] ?? '') . " " . ($row['last_name'] ?? ''));
+
+    $avatar = !empty($row['profile_picture'])
+        ? "uploads/" . $row['profile_picture']
+        : "uploads/default-avatar.png";
+
+	        $user_data_map[$row['id']] = [
+			        'name'   => $name,
+				        'avatar' => $avatar
+					    ];
+}
+
+
+?>
 
 <!DOCTYPE html>
 <html>
@@ -194,6 +263,7 @@ border-bottom:1px solid #0e1621;
 .chat-title{
 color:white;
 font-weight:600;
+margin-left:10px;
 }
 
 /* MESSAGES */
@@ -414,6 +484,16 @@ cursor:pointer;
         text-overflow: ellipsis;
         margin: 0;
     }
+
+    .unseen-dot{
+        width:8px;
+        height:8px;
+        background:#0084ff;
+        border-radius:50%;
+        display:inline-block;
+        margin-left:6px;
+    }
+
 </style>
 
 
@@ -471,8 +551,11 @@ cursor:pointer;
             <?php foreach ($chats as $chat): 
                 $uid = $chat['user_id'];
                 $display_name = $user_data_map[$uid]['name'] ?? "User " . $uid;
-                $avatar_url = getAvatar($user_data_map[$uid]['avatar'] ?? '');
-                $is_active = (isset($_GET['user_id']) && $_GET['user_id'] == $uid) ? 'active' : '';
+		$base_avatar = $user_data_map[$uid]['avatar'] ?? 'uploads/default-avatar.png';
+		$avatar_url = $base_avatar . "?t=" . time();
+		$is_active = (isset($_GET['user_id']) && $_GET['user_id'] == $uid) ? 'active' : '';
+		$chat_id = $chat['chat_id'];
+		$has_unseen = isset($unseen_data[$chat_id]) && $unseen_data[$chat_id] > 0;
             ?>
                 <div class="chat-item <?= $is_active ?>" 
                      onclick="location.href='chat.php?user_id=<?= $uid ?>'">
@@ -484,10 +567,27 @@ cursor:pointer;
                     <div class="chat-info">
                         <div class="chat-row">
                             <span class="user-name"><?= htmlspecialchars($display_name) ?></span>
-                            <span class="chat-time"><?= date("H:i", strtotime($chat['timestamp'])) ?></span>
                         </div>
                         <p class="last-message"><?= htmlspecialchars($chat['last_message']) ?></p>
-                    </div>
+		    </div>
+
+                    <div class="chat-meta">
+                        <span class="chat-time">
+        		      <?php 
+	         	      if (!empty($chat['timestamp'])) {
+	                          echo date('H:i', strtotime($chat['timestamp']));
+	                      }
+		              ?>
+		        </span>
+		
+		        <?php 
+		        $chat_id = $chat['chat_id'];
+		        if (isset($unseen_data[$chat_id]) && $unseen_data[$chat_id] > 0): 
+		        ?>
+		            <span class="unseen-dot"></span>
+		        <?php endif; ?>
+		    </div>
+
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
@@ -501,7 +601,8 @@ cursor:pointer;
 <div class="chat-area">
 
 <div class="chat-header">
-<div class="chat-title">Chat with User <?= $receiver_id ?></div>
+    <img src="<?= $avatar_url ?>" class="chat-avatar" onerror="this.src='uploads/default-avatar.png'">
+    <div class="chat-title"><?= htmlspecialchars($display_name) ?></div>
 </div>
 
 <div id="messages" class="messages"></div>

@@ -134,6 +134,23 @@ def online():
     return list(online_users)
 
 
+# Unseen api
+@app.get("/unseen/{user_id}")
+def get_unseen_counts(user_id: int):
+
+    pipeline = [
+        {"$match": {"receiver_id": user_id, "seen": false}},
+        {"$group": {"_id": "$chat_id", "count": {"$sum": 1}}}
+    ]
+
+    results = list(messages.aggregate(pipeline))
+
+    unseen_map = {}
+    for item in results:
+        unseen_map[item["_id"]] = item["count"]
+
+    return unseen_map
+
 # Websocket endpoint
 @app.websocket("/ws/{receiver_id}")
 async def websocket_endpoint(websocket: WebSocket, receiver_id: str):
@@ -182,3 +199,25 @@ async def websocket_endpoint(websocket: WebSocket, receiver_id: str):
 
     except:
         connections.remove(websocket)
+
+
+# This function will show unread messages
+def mark_messages_as_seen(chat_id, receiver_id):
+    
+    result = db.messages.update_many(
+        {"chat_id": chat_id, "receiver_id": receiver_id, "seen": false},
+        {"$set": {"seen": true}}
+    )
+    return result.modified_count  # Count of messages were updated
+
+
+def get_unseen_counts(my_user_id):
+    pipeline = [
+        {"$match": {"receiver_id": my_user_id, "seen": false}},
+        {"$group": {"_id": "$chat_id", "count": {"$sum": 1}}}
+    ]
+    results = list(db.messages.aggregate(pipeline))
+    # Output in dictioanry type: {'1_2': 3, '1_5': 1}
+    return {item['_id']: item['count'] for item in results}
+
+            
