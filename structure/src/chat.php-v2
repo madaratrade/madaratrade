@@ -1,0 +1,247 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+	    die("Not logged in");
+}
+
+$sender_id   = $_SESSION['user_id'];
+$username    = $_SESSION['username'];
+$uuid        = $_SESSION['uuid'];
+$receiver_id = $_GET['user'] ?? null;
+
+if (!$receiver_id) {
+	    die("Receiver not defined");
+}
+
+$chat_id = $sender_id < $receiver_id
+	    ? "{$sender_id}_{$receiver_id}"
+	        : "{$receiver_id}_{$sender_id}";
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Telegram Chat</title>
+
+<style>
+/* === Reset === */
+* {
+*     box-sizing: border-box;
+*     }
+*
+*/* === Body === */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #0e1621;
+}
+
+/* === Chat Wrapper === */
+.chat-wrapper {
+    max-width: 900px;
+    height: 100vh;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    background: #17212b;
+}
+
+/* === Header === */
+.chat-header {
+    height: 60px;
+    background: #17212b;
+    border-bottom: 1px solid #1f2b3a;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #2f80ed;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.chat-title {
+    font-size: 16px;
+    color: #fff;
+}
+
+/* === Messages === */
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #0e1621;
+}
+
+.message {
+    max-width: 65%;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+}
+
+.message.self {
+    margin-left: auto;
+    background: #2f80ed;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.other {
+    background: #1f2b3a;
+    color: #e4e6eb;
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 4px;
+    text-align: right;
+}
+
+/* === Input === */
+.chat-input {
+    padding: 10px;
+    background: #17212b;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #1f2b3a;
+}
+
+.chat-input input {
+    flex: 1;
+    background: #0e1621;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 12px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.chat-input button {
+    margin-left: 10px;
+    background: #2f80ed;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.chat-input button:hover {
+    background: #4c94ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat-wrapper">
+
+    <!-- Header -->
+    <div class="chat-header">
+        <div class="avatar"><?= strtoupper($receiver_id) ?></div>
+        <div class="chat-title">User <?= htmlspecialchars($receiver_id) ?></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages" class="chat-messages"></div>
+
+    <!-- Input -->
+    <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="Write a message…" autocomplete="off">
+        <button onclick="sendMessage()">➤</button>
+    </div>
+
+</div>
+
+<script>
+const sender_id   = <?= (int)$sender_id ?>;
+const receiver_id = <?= (int)$receiver_id ?>;
+const username    = "<?= $username ?>";
+const chat_id     = "<?= $chat_id ?>";
+
+const messagesDiv = document.getElementById("messages");
+
+/* Add message bubble */
+function addMessage(text, isSelf, time = "") {
+	    const msg = document.createElement("div");
+	        msg.className = "message " + (isSelf ? "self" : "other");
+
+	        msg.innerHTML = `
+			        <div>${text}</div>
+        <div class="message-time">${time}</div>
+    `;
+
+	        messagesDiv.appendChild(msg);
+		    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+/* Load history */
+async function loadMessages() {
+	    const res = await fetch(`http://192.168.107.160:8000/messages/${chat_id}`);
+	        const data = await res.json();
+	    
+	            data.forEach(m => {
+	                    const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+	                            addMessage(m.message, m.sender_id == sender_id, time);
+	                                });
+	                                }
+	    
+	                                /* WebSocket */
+	                                const ws = new WebSocket(`ws://192.168.107.160/ws/${sender_id}`);
+	    
+	                                ws.onmessage = (e) => {
+	                                    const data = JSON.parse(e.data);
+	    
+	                                        if (data.chat_id === chat_id) {
+	                                                const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+	                                                        addMessage(data.message, data.sender_id == sender_id, time);
+	                                                            }
+	                                                            };
+	    
+	                                                            /* Send message */
+	                                                            function sendMessage() {
+	                                                                const input = document.getElementById("messageInput");
+	                                                                    const text = input.value.trim();
+	                                                                        if (!text) return;
+	    
+	                                                                            ws.send(JSON.stringify({
+	                                                                                    chat_id: chat_id,
+	                                                                                            sender_id: sender_id,
+	                                                                                                    receiver_id: receiver_id,
+	                                                                                                            user: username,
+	                                                                                                                    uuid: "<?= $uuid ?>",
+	                                                                                                                            message: text
+	                                                                                                                                }));
+	    
+	                                                                                                                                    input.value = "";
+	                                                                                                                                    }
+	    
+	                                                                                                                                    document.getElementById("messageInput").addEventListener("keydown", e => {
+	                                                                                                                                        if (e.key === "Enter") sendMessage();
+	                                                                                                                                        });
+	    
+	                                                                                                                                        loadMessages();
+	                                                                                                                                        </script>
+	    
+	                                                                                                                                        </body>
+	                                                                                                                                        </html>
+	                                                                                                                                        
