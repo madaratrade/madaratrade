@@ -537,6 +537,77 @@ cursor:pointer;
 
 </style>
 
+<style>
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#chat-header-normal {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+#chat-header-select {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+#chat-header-select .select-left {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+#chat-header-select .select-right {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.icon-btn {
+background: transparent;
+border: none;
+color: #fff;
+cursor: pointer;
+font-size: 18px;
+}
+
+/* حالت انتخاب شده‌ی پیام (مثل تلگرام که یه های‌لایت می‌گیره) */
+.message.selected {
+background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* منوی کنار هر پیام (برای لیک ساده، نه حالت select) */
+.msg-actions {
+position: absolute;
+left:-120px;
+top: -20px;
+display: none;
+flex-direction: column;
+background: #222;
+border-radius: 8px;
+padding: 4px 6px;
+z-index: 100;
+box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.msg-actions button {
+background: transparent;
+border: none;
+color: #fff;
+cursor: pointer;
+font-size: 14px;
+}
+
+</style>
+
 </head>
 
 <body>
@@ -613,19 +684,44 @@ cursor:pointer;
 
 <div class="chat-area">
 
-<div class="chat-header">
-    <img src="<?= $avatar_url ?>" class="chat-avatar-area" onerror="this.src='uploads/default-avatar.png'">
-    <div class="chat-title"><?= htmlspecialchars($display_name) ?></div>
+    <!-- CHAT HEADER -->
+    <div class="chat-header">
+        <!-- حالت عادی -->
+        <div id="chat-header-normal">
+            <img src="<?= $avatar_url ?>" class="chat-avatar-area"
+                 onerror="this.src='uploads/default-avatar.png'">
+            <div class="chat-title"><?= htmlspecialchars($display_name) ?></div>
+        </div>
+
+        <!-- حالت انتخاب (اول مخفی) -->
+        <div id="chat-header-select" style="display: none;">
+            <div class="select-left">
+                <button class="icon-btn" onclick="exitSelectionMode()">
+                    ✖
+                </button>
+                <span id="selected-count">0</span>
+            </div>
+            <div class="select-right">
+                <!-- آیکون‌ها؛ متن‌شون مه نیست، بعداً با title می‌فهمی چیه -->
+                <button class="icon-btn" id="btn-select-reply"    title="Reply">↩</button>
+                <button class="icon-btn" id="btn-select-pin"      title="Pin">📌</button>
+                <button class="icon-btn" id="btn-select-copy"     title="Copy">📋</button>
+                <button class="icon-btn" id="btn-select-forward"  title="Forward">➡</button>
+                <button class="icon-btn" id="btn-select-save"     title="Save">💾</button>
+                <button class="icon-btn" id="btn-select-edit"     title="Edit">✏️</button>
+                <button class="icon-btn" id="btn-select-delete"   title="Delete">🗑</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messages" class="messages"></div>
+
+    <div class="input-area">
+        <input id="msg" placeholder="Write a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
 </div>
 
-<div id="messages" class="messages"></div>
-
-<div class="input-area">
-<input id="msg" placeholder="Write a message">
-<button onclick="sendMessage()">Send</button>
-</div>
-</div>
-</div>
 
 <!-- Modal Background -->
 <div id="profile-modal" class="modal-overlay" style="display:none;">
@@ -745,28 +841,84 @@ const messages = document.getElementById("messages");
 
 /* add message */
 
-function addMessage(text,isSelf,time,isSeen){
+/* function addMessage(text,isSelf,time,isSeen){
+/* 
+/* 	/* For seen unseen tick  */
+/* 	const tick = isSelf ? (isSeen ? "✓✓" : "✓") : "";
+/* 
+/* 	const div=document.createElement("div");
+/* 
+/* 	div.className="message "+(isSelf?"self":"other");
+/* 
+/* 	div.innerHTML = `
+/* 		        <div>${text}</div>
+/*         <div class="time">
+/* 	    ${time}
+/*             <span style="margin-left: 5px;">${tick}</span>
+/*         </div>`;
+/* 
+/* 
+/* 	messages.appendChild(div);
+/* 
+/* 	messages.scrollTop=messages.scrollHeight;
+/* 
+	/* } */
 
-	/* For seen unseen tick  */
-	const tick = isSelf ? (isSeen ? "✓✓" : "✓") : "";
+let selectionMode = false;
+let selectedMessages = new Set();
+let longPressTimer = null;
 
-	const div=document.createElement("div");
+function addMessage(text, isSelf, time, isSeen, messageId) {
+    const tick = isSelf ? (isSeen ? "✓✓" : "✓") : "";
+    const div = document.createElement("div");
+    div.className = "message " + (isSelf ? "self" : "other");
+    div.id = "msg-" + messageId;
 
-	div.className="message "+(isSelf?"self":"other");
+    div.style.position = "relative";
+		
+    div.innerHTML = `
+	<div class="msg-content">${text}</div>
+	<div class="time">${time} <span>${tick}</span></div>
+	<div class="msg-actions">
+	    <button onclick="msgAction(event, 'reply', ${messageId})">↩</button>
+	    <button onclick="msgAction(event, 'pin', ${messageId})">📌</button>
+	    <button onclick="msgAction(event, 'copy', ${messageId})">📋</button>
+	    <button onclick="msgAction(event, 'forward', ${messageId})">➡</button>
+	    <button onclick="msgAction(event, 'save', ${messageId})">💾</button>
+	    <button onclick="msgAction(event, 'edit', ${messageId})">✏️</button>
+	    <button onclick="msgAction(event, 'delete', ${messageId})">🗑</button>
+	    <button class="btn-reaction" onclick="msgAction(event, 'reaction', ${messageId})">😊</button>
+	</div>
+    `;
 
-	div.innerHTML = `
-		        <div>${text}</div>
-        <div class="time">
-	    ${time}
-            <span style="margin-left: 5px;">${tick}</span>
-        </div>`;
 
+    div.addEventListener("mousedown", (e) => {
+        longPressTimer = setTimeout(() => {
+	    enterSelectionMode();
+	    toggleSelectMessage(div);
+	}, 400); 
+    });
 
-	messages.appendChild(div);
+    div.addEventListener("mouseup", () => {
+        clearTimeout(longPressTimer);
+    });
 
-	messages.scrollTop=messages.scrollHeight;
+    div.addEventListener("click", (e) => {
+        
+        e.stopPropagation();
+        if (selectionMode) {
+            toggleSelectMessage(div);
+	} else {
+	    toggleMsgActions(div);
+	}
+    });
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
 
 }
+
+
 
 /* load history */
 
@@ -1050,6 +1202,110 @@ function getTickIcon(isSelf, isSeen) {
     return isSeen ? "✓✓" : "✓";
 }
 					    
+</script>
+
+<script>
+function toggleMsgActions(msgDiv) {
+
+    // document.querySelectorAll('.msg-actions').forEach(m => m.style.display = 'none');
+    // const actions = msgDiv.querySelector('.msg-actions');
+    // if (!actions) return;
+    // actions.style.display = 'flex';
+	
+    const actions = msgDiv.querySelector('.msg-actions');
+    if (!actions) return;
+    
+    const isOpen = actions.style.display === 'flex';
+    
+    closeAllMsgActions();
+    
+    if (!isOpen) {
+        actions.style.display = 'flex';
+    }
+}
+
+function msgAction(event, action, messageId) {
+    event.stopPropagation(); 
+    console.log("Action:", action, "on", messageId);
+
+    closeAllMsgActions();
+    if (selectionMode && action === 'reaction') {
+
+        return;
+    }
+
+
+}
+
+function closeAllMsgActions() {
+    document.querySelectorAll('.msg-actions').forEach(m => m.style.display = 'none');
+}
+
+
+/* --- Selection Mode --- */
+
+function enterSelectionMode() {
+    if (selectionMode) return;
+    selectionMode = true;
+    document.getElementById('chat-header-normal').style.display = 'none';
+    document.getElementById('chat-header-select').style.display = 'flex';
+
+    document.querySelectorAll('.btn-reaction').forEach(b => b.style.display = 'none');
+
+    updateSelectionHeader();
+}
+
+function exitSelectionMode() {
+    selectionMode = false;
+    selectedMessages.clear();
+    document.getElementById('chat-header-normal').style.display = 'flex';
+    document.getElementById('chat-header-select').style.display = 'none';
+    document.querySelectorAll('.message.selected').forEach(el => el.classList.remove('selected'));
+
+    document.querySelectorAll('.btn-reaction').forEach(b => b.style.display = 'inline-flex');
+}
+
+function toggleSelectMessage(msgDiv) {
+    const id = msgDiv.id; 
+    if (msgDiv.classList.contains('selected')) {
+        msgDiv.classList.remove('selected');
+        selectedMessages.delete(id);
+    } else {
+        msgDiv.classList.add('selected');
+        selectedMessages.add(id);
+    }
+
+    if (selectedMessages.size === 0) {
+        exitSelectionMode();
+    } else {
+        updateSelectionHeader();
+    }
+}
+
+function updateSelectionHeader() {
+    const count = selectedMessages.size;
+    document.getElementById('selected-count').innerText = count;
+
+        const btnEdit = document.getElementById('btn-select-edit');
+
+    if (count === 1) {
+        btnEdit.style.display = 'inline-flex';
+    } else {
+        btnEdit.style.display = 'none';
+    }
+
+}
+
+</script>
+
+<script>
+document.addEventListener('click', function (e) {
+if (e.target.closest('.msg-actions') || e.target.closest('.message')) {
+    return;
+}
+closeAllMsgActions();
+});
+					
 </script>
 
 </body>
