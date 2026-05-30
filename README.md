@@ -1,49 +1,52 @@
-Realtime Chat System (PHP + FastAPI + MongoDB)
-A full‑stack realtime chat application built with PHP (frontend/server rendering), FastAPI (Python API services), MongoDB (message storage), and Dockerized infrastructure with Nginx.
+# Realtime Chat System (PHP + FastAPI + MongoDB)
+## A full‑stack realtime chat application built with PHP (frontend/server rendering), FastAPI (Python API services), MongoDB (message storage), and Dockerized infrastructure with Nginx.
 
-The project combines a traditional PHP web interface with a modern Python microservice for chat operations, enabling scalable message handling and clean separation of responsibilities.
+## The project combines a traditional PHP web interface with a modern Python microservice for chat operations, enabling scalable message handling and clean separation of responsibilities.
 
-Architecture Overview
-The system is composed of four main layers:
+## Architecture Overview
+**The system is composed of four main layers:**
 
-1. PHP Application
+### 1. PHP Application
 
-Handles authentication, sessions, and UI rendering
+**Handles authentication, sessions, and UI rendering
 Displays chat list and chat area
 Communicates with the FastAPI service using HTTP requests
-Manages profile settings and file uploads
-2. FastAPI Service
+Manages profile settings and file uploads**
 
-Handles chat-related APIs
+### 2. FastAPI Service
+
+**Handles chat-related APIs
 Stores and retrieves messages from MongoDB
 Calculates unseen messages per chat
 Marks messages as seen
-Provides data endpoints for the PHP frontend
-3. MongoDB
+Provides data endpoints for the PHP frontend**
 
-Stores chat messages
+### 3. MongoDB
+
+**Stores chat messages
 Optimized for message history and aggregation
-Used for unseen message counts and timestamps
-4. Docker + Nginx
+Used for unseen message counts and timestamps**
 
-Containerized environment
+### 4. Docker + Nginx
+
+**Containerized environment
 Nginx acts as a reverse proxy
 Routes requests between PHP and FastAPI services
 Tech Stack
-Frontend / Server Rendering
+Frontend / Server Rendering**
 
-PHP
+**PHP
 HTML / CSS / JavaScript
-Backend API
+Backend API**
 
-Python
+**Python
 FastAPI
-Database
+Database**
 
-MongoDB
-Infrastructure
+**MongoDB
+Infrastructure**
 
-Docker
+**Docker
 Docker Compose
 Nginx
 Main Features
@@ -64,16 +67,18 @@ Seen Status
 Messages marked as seen when opened in chat area
 Updates stored in MongoDB
 UI reflects read status
-Chat List UI
-Displays:
+Chat List UI**
 
-User avatar
+## Displays:
+
+**User avatar
 Display name
 Last message
 Timestamp
-Unread message indicator
+Unread message indicator**
 
-Project Structure (Simplified)
+## Project Structure (Simplified)
+```bash
 project-root
 │
 ├── php-app/
@@ -93,7 +98,7 @@ project-root
 │
 └── uploads/
     └── profile_images
-
+```
 
 API Endpoints (FastAPI)
 Get Unseen Messages Per Chat
