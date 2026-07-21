@@ -1,0 +1,340 @@
+<?php
+session_start();
+
+$isLoggedIn = isset($_SESSION['is_logged']) && $_SESSION['is_logged'] === true;
+$username   = $_SESSION['username'] ?? 'Guest';
+
+function e($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+
+$features = [
+  ['title' => 'Showcase Garage', 'desc' => 'نمایش ماشین‌های شخصی‌سازی‌شده با عکس، مشخصات و استایل اختصاصی هر کاربر.'],
+  ['title' => 'Explore & Discover', 'desc' => 'جستجو و اکسپلور ماشین‌های خاص، نایاب و ترند بین اعضای سایت.'],
+  ['title' => 'Follow System', 'desc' => 'فالو کردن کاربران، دیدن آپدیت‌های گاراژشان و ساختن شبکه اجتماعی داخل سایت.'],
+  ['title' => 'Trade Requests', 'desc' => 'ارسال درخواست ترید و ارتباط مستقیم برای معامله یا هماهنگی بین بازیکن‌ها.'],
+  ['title' => 'Chat & Social', 'desc' => 'چت، تعامل و ساخت پروفایل اجتماعی برای هر بازیکن و کلکسیون او.'],
+  ['title' => 'Subscription Access', 'desc' => 'دسترسی سطح‌بندی‌شده بر اساس اشتراک فعال برای امکانات ویژه و حرفه‌ای‌تر.'],
+];
+
+$offers = [
+  ['title' => 'Free Starter', 'desc' => 'ساخت پروفایل، مشاهده بخشی از اکسپلور و دنبال کردن کاربران.', 'badge' => 'برای شروع'],
+  ['title' => 'Premium Garage', 'desc' => 'آپلود بیشتر، نمایش بهتر، اولویت در اکسپلور و امکانات ویژه.', 'badge' => 'پیشنهادی'],
+  ['title' => 'Trader Access', 'desc' => 'دسترسی کامل به trade request، پیام‌ها و ابزارهای حرفه‌ای.', 'badge' => 'حرفه‌ای'],
+];
+
+$stats = [
+  ['num' => 'GTA VI', 'label' => 'تم بصری الهام‌گرفته از دنیای نئونی و مدرن'],
+  ['num' => 'Social', 'label' => 'پروفایل، فالو، چت و تعامل بین کاربران'],
+  ['num' => 'Trade', 'label' => 'ساختار ویژه برای درخواست و مدیریت معامله'],
+];
+
+?>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Madaratrade | GTA VI Theme</title>
+  <style>
+    :root{
+      --bg:#061018;
+      --bg2:#0a1622;
+      --panel:rgba(10,20,32,.82);
+      --panel2:rgba(13,25,40,.9);
+      --text:#edf7ff;
+      --muted:#9bb4ca;
+      --line:rgba(255,255,255,.08);
+      --cyan:#7cecff;
+      --pink:#ff63d0;
+      --purple:#8b7dff;
+      --green:#96ff63;
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+      --radius:24px;
+      --max:1240px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Tahoma, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(255,99,208,.18), transparent 18%),
+        radial-gradient(circle at 82% 8%, rgba(124,236,255,.16), transparent 16%),
+        radial-gradient(circle at 70% 92%, rgba(139,125,255,.12), transparent 18%),
+        linear-gradient(180deg, #04080d 0%, var(--bg) 45%, #03060a 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    a{text-decoration:none;color:inherit}
+    .container{max-width:var(--max); margin:auto; padding:0 20px}
+
+    .nav{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(14px);
+      background:linear-gradient(180deg, rgba(3,7,12,.92), rgba(3,7,12,.65));
+      border-bottom:1px solid var(--line);
+    }
+    .nav-inner{
+      min-height:78px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background:linear-gradient(135deg, var(--pink), var(--cyan));
+      box-shadow:0 0 24px rgba(124,236,255,.18);
+    }
+    .brand h1{margin:0;font-size:18px;letter-spacing:.5px}
+    .brand small{display:block;color:var(--muted);margin-top:2px;font-size:12px}
+
+    .menu{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 14px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(18,30,45,.92), rgba(9,16,26,.92));
+      color:var(--text); box-shadow:var(--shadow);
+      font-size:14px;
+    }
+    .btn.primary{
+      background:linear-gradient(135deg, var(--pink), var(--cyan));
+      color:#071018; font-weight:700;
+    }
+
+    .hero{
+      padding:36px 0 18px;
+    }
+    .hero-grid{
+      display:grid; grid-template-columns:1.25fr .95fr; gap:20px;
+    }
+    .panel{
+      border:1px solid rgba(255,255,255,.07);
+      background:linear-gradient(180deg, var(--panel), rgba(8,14,22,.92));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .hero-main{padding:30px}
+    .badge{
+      display:inline-flex; padding:7px 12px; border-radius:999px;
+      background:rgba(124,236,255,.10);
+      border:1px solid rgba(124,236,255,.16);
+      color:var(--cyan); font-size:12px; letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+    h2{
+      margin:16px 0 10px;
+      font-size:46px; line-height:1.08; text-transform:uppercase;
+    }
+    .lead{color:var(--muted); line-height:1.95; font-size:15px; max-width:760px}
+    .cta{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px}
+
+    .stats{
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:24px;
+    }
+    .stat{
+      padding:16px; border-radius:18px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05);
+    }
+    .stat b{display:block; font-size:21px; color:var(--cyan); margin-bottom:6px}
+    .stat span{color:var(--muted); font-size:13px; line-height:1.7}
+
+    .side{padding:22px}
+    .welcome{
+      padding:18px; border-radius:18px;
+      background:linear-gradient(180deg, rgba(18,30,45,.95), rgba(10,16,26,.95));
+      border:1px solid rgba(255,255,255,.06);
+      margin-bottom:14px;
+    }
+    .welcome h3{margin:0 0 8px}
+    .welcome p{margin:0;color:var(--muted);line-height:1.8}
+    .mini{
+      margin-top:14px; display:grid; gap:10px;
+    }
+    .mini .row{
+      display:flex; justify-content:space-between; gap:10px;
+      padding:12px 14px; border-radius:14px;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05);
+      color:var(--muted); font-size:14px;
+    }
+    .row strong{color:var(--text)}
+
+    section{padding:16px 0 0}
+    .section-title{
+      display:flex; justify-content:space-between; align-items:end; gap:12px;
+      margin:8px 0 14px;
+    }
+    .section-title h3{margin:0;font-size:24px}
+    .section-title p{margin:0;color:var(--muted);font-size:14px}
+
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+    .card{
+      padding:18px; border-radius:20px;
+      background:linear-gradient(180deg, var(--panel2), rgba(8,14,22,.9));
+      border:1px solid rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+    }
+    .card h4{margin:0 0 8px; font-size:18px}
+    .card p{margin:0; color:var(--muted); line-height:1.9; font-size:14px}
+    .pill{
+      display:inline-block; margin-bottom:10px;
+      padding:6px 10px; border-radius:999px;
+      background:rgba(255,99,208,.12); color:var(--pink);
+      font-size:12px; border:1px solid rgba(255,99,208,.18)
+    }
+
+    .footer{
+      padding:28px 0 34px;
+      color:var(--muted);
+      text-align:center;
+      font-size:13px;
+    }
+
+    @media (max-width: 980px){
+      .hero-grid,.grid-3,.stats{grid-template-columns:1fr}
+      h2{font-size:34px}
+      .nav-inner{flex-direction:column; padding:14px 0}
+      .menu{justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="container">
+      <div class="nav-inner">
+        <a class="brand" href="/">
+          <div class="logo"></div>
+          <div>
+            <h1>Madaratrade</h1>
+            <small>GTA VI-inspired car social platform</small>
+          </div>
+        </a>
+
+        <div class="menu">
+          <a class="btn" href="#features">امکانات</a>
+          <a class="btn" href="#offers">آفرها</a>
+          <a class="btn" href="#about">هدف سایت</a>
+          <?php if($isLoggedIn): ?>
+            <a class="btn" href="profile.php">پروفایل</a>
+            <a class="btn primary" href="logout.php">خروج</a>
+          <?php else: ?>
+            <a class="btn" href="login.php">ورود</a>
+            <a class="btn primary" href="register.php">ثبت‌نام</a>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container hero">
+    <div class="hero-grid">
+      <div class="panel hero-main">
+        <span class="badge">Grand Theft Auto VI Style</span>
+        <h2>Showcase. Discover. Trade.</h2>
+        <p class="lead">
+          Madaratrade یک پلتفرم تخصصی برای بازیکن‌های GTA V Online است تا ماشین‌های شخصی‌سازی‌شده خود را
+          به نمایش بگذارند، دیگران را دنبال کنند، درخواست ترید بفرستند، چت کنند و یک پروفایل اجتماعی
+          حرفه‌ای برای کلکسیون خودروهایشان بسازند.
+        </p>
+
+        <div class="cta">
+          <a class="btn primary" href="<?php echo $isLoggedIn ? 'explore.php' : 'register.php'; ?>">
+            <?php echo $isLoggedIn ? 'Explore Cars' : 'Join Now'; ?>
+          </a>
+          <a class="btn" href="explore.php">Discover Garage</a>
+          <a class="btn" href="about.php">About Madaratrade</a>
+        </div>
+
+        <div class="stats">
+          <?php foreach($stats as $s): ?>
+            <div class="stat">
+              <b><?php echo e($s['num']); ?></b>
+              <span><?php echo e($s['label']); ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <div class="panel side">
+        <div class="welcome">
+          <h3><?php echo $isLoggedIn ? 'خوش آمدی، ' . e($username) : 'Welcome, Guest'; ?></h3>
+          <p>
+            اینجا مرکز گاراژ اجتماعی، اکسپلور ماشین‌ها و ارتباط بین کلکسیونرهای GTA است.
+          </p>
+        </div>
+
+        <div class="mini">
+          <div class="row"><strong>Profile System</strong><span>پروفایل + کلکسیون</span></div>
+          <div class="row"><strong>Follow / Unfollow</strong><span>تعامل اجتماعی</span></div>
+          <div class="row"><strong>Trade Requests</strong><span>درخواست معامله</span></div>
+          <div class="row"><strong>Subscription Access</strong><span>سطح دسترسی ویژه</span></div>
+          <div class="row"><strong>MongoDB Cars Data</strong><span>ذخیره پست‌ها</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h3>هدف وبسایت</h3>
+          <p>یک بستر اجتماعی و تخصصی برای ماشین‌های GTA V Online</p>
+        </div>
+      </div>
+      <div class="card">
+        <p>
+          Madaratrade برای این ساخته شده که بازیکن‌ها بتوانند ماشین‌های خاص، کاستوم‌شده و کلکسیونی خود را
+          منتشر کنند، دیده شوند، فالو بگیرند، با دیگران ارتباط داشته باشند و در یک فضای حرفه‌ای برای
+          trade و showcase فعالیت کنند. طراحی سایت باید مدرن، نئونی، لوکس و نزدیک به حس‌وحال GTA VI باشد.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h3>امکانات اصلی</h3>
+          <p>چیزهایی که کاربر باید از همان صفحه اول بفهمد</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <?php foreach($features as $f): ?>
+          <div class="card">
+            <h4><?php echo e($f['title']); ?></h4>
+            <p><?php echo e($f['desc']); ?></p>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <section id="offers">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h3>آفرها و پلن‌ها</h3>
+          <p>نمایش سطح دسترسی و مزیت اشتراک فعال</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <?php foreach($offers as $o): ?>
+          <div class="card">
+            <span class="pill"><?php echo e($o['badge']); ?></span>
+            <h4><?php echo e($o['title']); ?></h4>
+            <p><?php echo e($o['desc']); ?></p>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    © <?php echo e($nowYear); ?> Madaratrade — Built for GTA car collectors and traders.
+  </div>
+</body>
+</html>

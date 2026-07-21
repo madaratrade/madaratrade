@@ -1,0 +1,8 @@
+{
+    "name": "madaratrade/src",
+    "description": "MadaraTrade Backend Service",
+    "type": "project",
+    "require": {
+        "mongodb/mongodb": "^2.3"
+    }
+}

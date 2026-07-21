@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['phone_number'] = $db_phone;
                     $_SESSION['user_id'] = $id;
 
-                    header("Location: chat.php");
+                    header("Location: home.php");
                     exit;
                 } else {
                     $message = "❌ Invalid password!";

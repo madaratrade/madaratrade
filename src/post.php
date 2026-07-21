@@ -1,0 +1,839 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['user_id'], $_SESSION['username'])) {
+    header('Location: login.php');
+    exit;
+}
+
+function h(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
+
+$username = (string) $_SESSION['username'];
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post | MadaraTrade</title>
+    <style>
+        :root {
+            --bg-1: #040814;
+            --bg-2: #0a1224;
+            --panel: rgba(13, 20, 38, 0.78);
+            --panel-2: rgba(18, 28, 52, 0.92);
+            --line: rgba(255, 255, 255, 0.08);
+            --line-strong: rgba(0, 229, 255, 0.22);
+            --text: #f5f7fb;
+            --muted: #95a6c3;
+            --cyan: #00e5ff;
+            --pink: #ff4fd8;
+            --green: #33d17a;
+            --red: #ff607d;
+            --shadow-cyan: 0 0 24px rgba(0, 229, 255, 0.20);
+            --shadow-pink: 0 0 24px rgba(255, 79, 216, 0.18);
+            --radius: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(0, 229, 255, 0.10), transparent 28%),
+                radial-gradient(circle at top right, rgba(255, 79, 216, 0.08), transparent 28%),
+                linear-gradient(180deg, var(--bg-2), var(--bg-1));
+        }
+
+        .container {
+            width: min(1180px, 94%);
+            margin: 0 auto;
+            padding: 28px 0 44px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--cyan);
+            text-shadow: var(--shadow-cyan);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 46px;
+            padding: 0 18px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            text-decoration: none;
+            cursor: pointer;
+            transition: 0.2s ease;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            color: #06111d;
+            border: none;
+            background: linear-gradient(135deg, var(--cyan), var(--pink));
+            box-shadow: var(--shadow-cyan), var(--shadow-pink);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.04);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+            gap: 24px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.24);
+        }
+
+        .main-panel {
+            padding: 24px;
+        }
+
+        .title {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 900;
+        }
+
+        .subtitle {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #dce6f5;
+        }
+
+        .input,
+        .textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            background: rgba(6, 12, 24, 0.9);
+            color: var(--text);
+            padding: 14px 16px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s ease;
+        }
+
+        .input:focus,
+        .textarea:focus {
+            border-color: var(--line-strong);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.08);
+        }
+
+        .textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.7;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .helper {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .counter {
+            color: var(--cyan);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .tags-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tag-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chips {
+            min-height: 52px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(6, 12, 24, 0.9);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            color: var(--cyan);
+            background: rgba(0, 229, 255, 0.10);
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .chip button {
+            border: none;
+            background: transparent;
+            color: var(--pink);
+            cursor: pointer;
+            padding: 0;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .empty-text {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .upload-box {
+            padding: 28px 20px;
+            border-radius: 22px;
+            border: 1.5px dashed rgba(0, 229, 255, 0.35);
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.03), rgba(255, 79, 216, 0.03));
+            text-align: center;
+            transition: 0.2s ease;
+        }
+
+        .upload-box.drag-over {
+            border-color: rgba(0, 229, 255, 0.75);
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.06), rgba(255, 79, 216, 0.05));
+        }
+
+        .upload-icon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        .upload-title {
+            font-size: 19px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .upload-note {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .preview-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 14px;
+        }
+
+        .preview-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .preview-card img {
+            width: 100%;
+            height: 145px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .preview-info {
+            padding: 10px;
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.68);
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .status {
+            display: none;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            color: #98f0b9;
+            background: rgba(51, 209, 122, 0.10);
+            border: 1px solid rgba(51, 209, 122, 0.22);
+        }
+
+        .status.error {
+            color: #ff9bb1;
+            background: rgba(255, 96, 125, 0.10);
+            border: 1px solid rgba(255, 96, 125, 0.22);
+        }
+
+        .submit-row {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .submit-note {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+            max-width: 520px;
+        }
+
+        .side-panel {
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .side-title {
+            margin: 0 0 12px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .side-text,
+        .side-list li {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .side-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 0 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #dce6f5;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        code {
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #dce6f5;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: min(96%, 96%);
+            }
+
+            .main-panel,
+            .side-panel {
+                padding: 18px;
+            }
+
+            .tag-row,
+            .submit-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <div class="logo"><span>Madara</span>Trade</div>
+        <div class="topbar-actions">
+            <a href="home.php" class="btn">Back to Home</a>
+            <a href="profile.php?username=<?= h($username) ?>" class="btn">My Profile</a>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="panel main-panel">
+            <h1 class="title">Create New Post</h1>
+            <p class="subtitle">
+                Upload multiple images, write your caption, add searchable tags, and publish your post.
+                Your <code>post_id</code> will be created sequentially for your account starting from 1.
+            </p>
+
+            <form id="postForm" enctype="multipart/form-data">
+                <div class="group">
+                    <label for="caption" class="label">Caption</label>
+                    <textarea
+                        id="caption"
+                        name="caption"
+                        class="textarea"
+                        maxlength="3000"
+                        placeholder="Write something about your trade, offer, listing, or update..."></textarea>
+                    <div class="meta-row">
+                        <div class="helper">You can post with images, caption, and tags.</div>
+                        <div class="counter"><span id="captionCount">0</span>/3000</div>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label for="tagInput" class="label">Post Tags</label>
+                    <div class="tags-wrap">
+                        <div class="tag-row">
+                            <input
+                                type="text"
+                                id="tagInput"
+                                class="input"
+                                placeholder="Add tags like: gta6, trade, supercar, vip">
+                            <button type="button" class="btn" id="addTagBtn">Add Tag</button>
+                        </div>
+                        <div id="tagBox" class="chips"></div>
+                        <div class="helper">Tags are normalized for future filtering and search.</div>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label class="label">Upload Images</label>
+                    <div class="upload-box" id="uploadBox">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-title">Drag and drop your images here</div>
+                        <div class="upload-note">
+                            Supported formats: JPG, JPEG, PNG, WEBP, GIF<br>
+                            You can upload multiple images in one post.
+                        </div>
+                        <div style="margin-top: 14px;">
+                            <button type="button" class="btn btn-primary" id="selectImagesBtn">Select Images</button>
+                        </div>
+                        <input
+                            type="file"
+                            id="images"
+                            name="images[]"
+                            class="hidden-input"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+                            multiple>
+                    </div>
+                    <div id="previewGrid" class="preview-grid"></div>
+                </div>
+
+                <div id="statusBox" class="status"></div>
+
+                <div class="submit-row">
+                    <div class="submit-note">
+                        Files are stored on the server under your own folder using your sequential
+                        <code>post_id</code>.
+                    </div>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Upload Post</button>
+                </div>
+            </form>
+        </div>
+
+        <div>
+            <div class="panel side-panel">
+                <h3 class="side-title">How It Works</h3>
+                <ul class="side-list">
+                    <li>Each user gets their own post counter starting from 1.</li>
+                    <li>Your files are stored in <code>images/posts/username/post_id/</code>.</li>
+                    <li>Multiple images are supported per post.</li>
+                    <li>Tags are cleaned and deduplicated automatically.</li>
+                </ul>
+            </div>
+
+            <div class="panel side-panel">
+                <h3 class="side-title">Storage Pattern</h3>
+                <p class="side-text">Uploaded files are stored like this:</p>
+                <div class="badge">images/posts/<?= h($username) ?>/1/2026-07-16-car.jpg</div>
+            </div>
+
+            <div class="panel side-panel">
+                <h3 class="side-title">Example Tags</h3>
+                <div class="badge">gta6</div>
+                <div class="badge">trade</div>
+                <div class="badge">car</div>
+                <div class="badge">supercar</div>
+                <div class="badge">vip</div>
+                <div class="badge">account</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const caption = document.getElementById('caption');
+const captionCount = document.getElementById('captionCount');
+const tagInput = document.getElementById('tagInput');
+const addTagBtn = document.getElementById('addTagBtn');
+const tagBox = document.getElementById('tagBox');
+const imagesInput = document.getElementById('images');
+const selectImagesBtn = document.getElementById('selectImagesBtn');
+const uploadBox = document.getElementById('uploadBox');
+const previewGrid = document.getElementById('previewGrid');
+const postForm = document.getElementById('postForm');
+const submitBtn = document.getElementById('submitBtn');
+const statusBox = document.getElementById('statusBox');
+
+let tags = [];
+let selectedFiles = [];
+
+caption.addEventListener('input', function () {
+    captionCount.textContent = this.value.length;
+});
+
+function normalizeTag(tag) {
+    return tag
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9_-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^[-_]+|[-_]+$/g, '');
+}
+
+function renderTags() {
+    tagBox.innerHTML = '';
+
+    if (tags.length === 0) {
+        const span = document.createElement('span');
+        span.className = 'empty-text';
+        span.textContent = 'No tags added yet.';
+        tagBox.appendChild(span);
+        return;
+    }
+
+    tags.forEach((tag, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+
+        const text = document.createElement('span');
+        text.textContent = '#' + tag;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.innerHTML = '&times;';
+        button.addEventListener('click', function () {
+            removeTag(index);
+        });
+
+        chip.appendChild(text);
+        chip.appendChild(button);
+        tagBox.appendChild(chip);
+    });
+}
+
+function addTag() {
+    const raw = tagInput.value.trim();
+    if (!raw) {
+        return;
+    }
+
+    const parts = raw.split(',');
+    parts.forEach((part) => {
+        const tag = normalizeTag(part);
+        if (tag && !tags.includes(tag)) {
+            tags.push(tag);
+        }
+    });
+
+    tagInput.value = '';
+    renderTags();
+}
+
+function removeTag(index) {
+    tags.splice(index, 1);
+    renderTags();
+}
+
+addTagBtn.addEventListener('click', addTag);
+
+tagInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addTag();
+    }
+});
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) {
+        return bytes + ' B';
+    }
+    if (bytes < 1024 * 1024) {
+        return (bytes / 1024).toFixed(1) + ' KB';
+    }
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function renderPreviews() {
+    previewGrid.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = file.name;
+
+        const info = document.createElement('div');
+        info.className = 'preview-info';
+        info.textContent = file.name + ' • ' + formatFileSize(file.size);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.addEventListener('click', function () {
+            selectedFiles.splice(index, 1);
+            renderPreviews();
+        });
+
+        card.appendChild(img);
+        card.appendChild(removeBtn);
+        card.appendChild(info);
+        previewGrid.appendChild(card);
+    });
+}
+
+function addFiles(files) {
+    Array.from(files).forEach((file) => {
+        if (!file.type.startsWith('image/')) {
+            return;
+        }
+
+        const exists = selectedFiles.some((item) => {
+            return (
+                item.name === file.name &&
+                item.size === file.size &&
+                item.lastModified === file.lastModified
+            );
+        });
+
+        if (!exists) {
+            selectedFiles.push(file);
+        }
+    });
+
+    renderPreviews();
+}
+
+selectImagesBtn.addEventListener('click', function () {
+    imagesInput.click();
+});
+
+imagesInput.addEventListener('change', function (event) {
+    addFiles(event.target.files);
+    imagesInput.value = '';
+});
+
+['dragenter', 'dragover'].forEach((eventName) => {
+    uploadBox.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        uploadBox.classList.add('drag-over');
+    });
+});
+
+['dragleave', 'drop'].forEach((eventName) => {
+    uploadBox.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        uploadBox.classList.remove('drag-over');
+    });
+});
+
+uploadBox.addEventListener('drop', function (event) {
+    addFiles(event.dataTransfer.files || []);
+});
+
+function showStatus(message, type) {
+    statusBox.textContent = message;
+    statusBox.className = 'status show ' + type;
+}
+
+function validateForm() {
+    const trimmedCaption = caption.value.trim();
+
+    if (!trimmedCaption && selectedFiles.length === 0) {
+        showStatus('Please add a caption or at least one image.', 'error');
+        return false;
+    }
+
+    if (selectedFiles.length === 0) {
+        showStatus('Please select at least one image.', 'error');
+        return false;
+    }
+
+    if (selectedFiles.length > 30) {
+        showStatus('Maximum allowed images per post is 30.', 'error');
+        return false;
+    }
+
+    return true;
+}
+
+postForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    if (!validateForm()) {
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading...';
+    showStatus('Uploading files and creating your post...', 'success');
+
+    const formData = new FormData();
+    formData.append('caption', caption.value.trim());
+
+    tags.forEach((tag) => {
+        formData.append('tags[]', tag);
+    });
+
+    selectedFiles.forEach((file) => {
+        formData.append('images[]', file);
+    });
+
+    try {
+        const response = await fetch('api/create_post.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const responseText = await response.text();
+        let data = null;
+
+        try {
+            data = responseText ? JSON.parse(responseText) : null;
+        } catch (parseError) {
+            console.error('Invalid JSON response from server:', responseText);
+            throw new Error('Server returned invalid JSON. Check the browser console for the raw response.');
+        }
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error((data && data.message) ? data.message : 'Failed to create post.');
+        }
+
+        showStatus('Post #' + data.post_id + ' created successfully. Redirecting...', 'success');
+
+        setTimeout(function () {
+            window.location.href = data.redirect || 'profile.php?username=<?= h($username) ?>';
+        }, 900);
+    } catch (error) {
+        showStatus(error.message || 'Unexpected error occurred.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Upload Post';
+    }
+});
+
+renderTags();
+</script>
+</body>
+</html>

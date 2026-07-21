@@ -1,0 +1,299 @@
+<?php
+session_start();
+
+header('Content-Type: application/json; charset=UTF-8');
+
+require_once __DIR__ . '/../config/mongo.php';
+
+use MongoDB\BSON\UTCDateTime;
+use MongoDB\Operation\FindOneAndUpdate;
+
+function json_response(bool $success, string $message, array $extra = [], int $status = 200): void
+{
+    http_response_code($status);
+    echo json_encode(
+        array_merge([
+            'success' => $success,
+            'message' => $message,
+        ], $extra),
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+    exit;
+}
+
+function sanitize_username(string $username): string
+{
+    $username = strtolower(trim($username));
+    $username = preg_replace('/[^a-z0-9_-]/', '', $username);
+    return $username ?? '';
+}
+
+function sanitize_file_basename(string $filename): string
+{
+    $name = pathinfo($filename, PATHINFO_FILENAME);
+    $name = strtolower($name);
+    $name = preg_replace('/[^a-z0-9 _-]/', '', $name);
+    $name = preg_replace('/\s+/', '-', $name);
+    $name = preg_replace('/-+/', '-', $name);
+    $name = trim($name, '-_');
+
+    return $name !== '' ? $name : 'file';
+}
+
+function normalize_tag(string $tag): string
+{
+    $tag = strtolower(trim($tag));
+    $tag = preg_replace('/\s+/', '-', $tag);
+    $tag = preg_replace('/[^a-z0-9_-]/', '', $tag);
+    $tag = trim($tag, '-_');
+
+    return $tag ?? '';
+}
+
+function cleanup_files(array $savedImages, string $baseStorageDir, string $absoluteDir): void
+{
+    foreach ($savedImages as $image) {
+        $fullPath = $baseStorageDir . $image['path'];
+        if (is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
+    if (is_dir($absoluteDir)) {
+        @rmdir($absoluteDir);
+    }
+}
+
+function next_post_id($mongoPostCounters, int $userId, string $username): int
+{
+    $counterDoc = $mongoPostCounters->findOneAndUpdate(
+        [
+            'user_id' => $userId,
+            'username' => $username,
+        ],
+        [
+            '$inc' => ['last_post_id' => 1],
+            '$setOnInsert' => [
+                'created_at' => new UTCDateTime((int) (microtime(true) * 1000)),
+            ],
+            '$set' => [
+                'updated_at' => new UTCDateTime((int) (microtime(true) * 1000)),
+            ],
+        ],
+        [
+            'upsert' => true,
+            'returnDocument' => FindOneAndUpdate::RETURN_DOCUMENT_AFTER,
+        ]
+    );
+
+    if (!isset($counterDoc['last_post_id'])) {
+        throw new RuntimeException('Failed to generate post ID.');
+    }
+
+    return (int) $counterDoc['last_post_id'];
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(false, 'Invalid request method.', [], 405);
+}
+
+if (!isset($_SESSION['user_id'], $_SESSION['username'])) {
+    json_response(false, 'Unauthorized access.', [], 401);
+}
+
+$userId = (int) $_SESSION['user_id'];
+$username = sanitize_username((string) $_SESSION['username']);
+
+if ($userId <= 0 || $username === '') {
+    json_response(false, 'Invalid session data.', [], 401);
+}
+
+$caption = trim((string) ($_POST['caption'] ?? ''));
+$rawTags = $_POST['tags'] ?? [];
+
+if (!is_array($rawTags)) {
+    $rawTags = [];
+}
+
+$tags = [];
+foreach ($rawTags as $tag) {
+    $normalized = normalize_tag((string) $tag);
+    if ($normalized !== '' && !in_array($normalized, $tags, true)) {
+        $tags[] = $normalized;
+    }
+}
+
+if (!isset($_FILES['images'])) {
+    json_response(false, 'No images uploaded.', [], 400);
+}
+
+$images = $_FILES['images'];
+
+if (
+    !isset($images['name'], $images['tmp_name'], $images['error'], $images['size']) ||
+    !is_array($images['name']) ||
+    !is_array($images['tmp_name']) ||
+    !is_array($images['error']) ||
+    !is_array($images['size'])
+) {
+    json_response(false, 'Invalid images payload.', [], 400);
+}
+
+$fileCount = count($images['name']);
+
+if ($fileCount < 1) {
+    json_response(false, 'No images selected.', [], 400);
+}
+
+if ($caption === '' && $fileCount === 0) {
+    json_response(false, 'Post must contain caption or images.', [], 400);
+}
+
+$allowedMimeTypes = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/webp' => 'webp',
+    'image/gif' => 'gif',
+];
+
+$maxFileSize = 15 * 1024 * 1024;
+$maxFiles = 30;
+
+if ($fileCount > $maxFiles) {
+    json_response(false, 'Too many images. Maximum allowed is ' . $maxFiles . '.', [], 400);
+}
+
+$baseStorageDir = realpath(__DIR__ . '/..');
+if ($baseStorageDir === false) {
+    json_response(false, 'Base project path not found.', [], 500);
+}
+
+try {
+    $postId = next_post_id($mongoPostCounters, $userId, $username);
+} catch (Throwable $e) {
+    json_response(false, 'Failed to generate post ID.', [], 500);
+}
+
+$datePrefix = date('Y-m-d');
+$relativeDir = '/home/' . $username . '/' . $postId . '/';
+$absoluteDir = $baseStorageDir . $relativeDir;
+
+if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
+    json_response(false, 'Failed to create upload directory.', [], 500);
+}
+
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+if ($finfo === false) {
+    json_response(false, 'Failed to initialize file validator.', [], 500);
+}
+
+$savedImages = [];
+
+for ($i = 0; $i < $fileCount; $i++) {
+    $error = (int) $images['error'][$i];
+    $tmpName = (string) $images['tmp_name'][$i];
+    $originalName = (string) $images['name'][$i];
+    $size = (int) $images['size'][$i];
+
+    if ($error !== UPLOAD_ERR_OK) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'Upload error for file: ' . $originalName, [], 400);
+    }
+
+    if (!is_uploaded_file($tmpName)) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'Invalid uploaded file detected.', [], 400);
+    }
+
+    if ($size <= 0) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'Empty file detected: ' . $originalName, [], 400);
+    }
+
+    if ($size > $maxFileSize) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'File too large: ' . $originalName . '.', [], 400);
+    }
+
+    $mimeType = finfo_file($finfo, $tmpName);
+    if (!is_string($mimeType) || !isset($allowedMimeTypes[$mimeType])) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'Unsupported file type: ' . $originalName, [], 400);
+    }
+
+    $extension = $allowedMimeTypes[$mimeType];
+    $safeBaseName = sanitize_file_basename($originalName);
+
+    $finalName = $datePrefix . '-' . $safeBaseName . '.' . $extension;
+    $absolutePath = $absoluteDir . $finalName;
+    $relativePath = $relativeDir . $finalName;
+
+    $counter = 1;
+    while (file_exists($absolutePath)) {
+        $finalName = $datePrefix . '-' . $safeBaseName . '-' . $counter . '.' . $extension;
+        $absolutePath = $absoluteDir . $finalName;
+        $relativePath = $relativeDir . $finalName;
+        $counter++;
+    }
+
+    if (!move_uploaded_file($tmpName, $absolutePath)) {
+        finfo_close($finfo);
+        cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+        json_response(false, 'Failed to save file: ' . $originalName, [], 500);
+    }
+
+    $savedImages[] = [
+        'path' => $relativePath,
+        'url' => $relativePath,
+        'filename' => $finalName,
+        'original_name' => $originalName,
+        'mime_type' => $mimeType,
+        'size' => $size,
+        'is_primary' => $i === 0,
+    ];
+}
+
+finfo_close($finfo);
+
+$now = new UTCDateTime((int) (microtime(true) * 1000));
+
+$postDocument = [
+    'post_id' => $postId,
+    'user_id' => $userId,
+    'username' => $username,
+    'caption' => $caption,
+    'tags' => $tags,
+    'images' => $savedImages,
+    'images_count' => count($savedImages),
+    'status' => 'published',
+    'visibility' => 'public',
+    'likes_count' => 0,
+    'comments_count' => 0,
+    'shares_count' => 0,
+    'views_count' => 0,
+    'created_at' => $now,
+    'updated_at' => $now,
+];
+
+try {
+    $mongoPosts->insertOne($postDocument);
+} catch (Throwable $e) {
+    cleanup_files($savedImages, $baseStorageDir, $absoluteDir);
+    json_response(false, 'Failed to save post in database.', [], 500);
+}
+
+json_response(true, 'Post created successfully.', [
+    'post_id' => $postId,
+    'redirect' => '/profile.php?username=' . urlencode($username),
+    'data' => [
+        'post_id' => $postId,
+        'images_count' => count($savedImages),
+        'tags_count' => count($tags),
+        'images' => $savedImages,
+    ],
+], 201);

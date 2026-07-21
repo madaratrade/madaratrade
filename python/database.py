@@ -6,3 +6,6 @@ db = client["chat_app"]
 
 messages = db["messages"]
 
+
+messages = db["messages"]
+posts = db["posts"]

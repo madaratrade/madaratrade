@@ -1,0 +1,56 @@
+<?php return array(
+    'root' => array(
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'type' => 'project',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'reference' => 'eb9af0f7b8bb129826e2a5f447cfa7ded07cd580',
+        'name' => 'madaratrade/src',
+        'dev' => true,
+    ),
+    'versions' => array(
+        'madaratrade/src' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'type' => 'project',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'reference' => 'eb9af0f7b8bb129826e2a5f447cfa7ded07cd580',
+            'dev_requirement' => false,
+        ),
+        'mongodb/builder' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
+        ),
+        'mongodb/mongodb' => array(
+            'pretty_version' => '2.3.0',
+            'version' => '2.3.0.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mongodb/mongodb',
+            'aliases' => array(),
+            'reference' => '12e56461166d915e3dd8e4969ad0940ed5207d88',
+            'dev_requirement' => false,
+        ),
+        'psr/log' => array(
+            'pretty_version' => '3.0.2',
+            'version' => '3.0.2.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/log',
+            'aliases' => array(),
+            'reference' => 'f16e1d5863e37f8d8c2a01719f5b34baa2b714d3',
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-php85' => array(
+            'pretty_version' => 'v1.38.1',
+            'version' => '1.38.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-php85',
+            'aliases' => array(),
+            'reference' => 'ba2ba04f3352cfa2dcbbcb90aee13ed967f505b1',
+            'dev_requirement' => false,
+        ),
+    ),
+);

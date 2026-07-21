@@ -6,7 +6,6 @@ volumes:
   ammighorbani-data:
   mysql_data:
   mongo_data:
-  minio_data:
 
 services:
   
@@ -72,20 +71,3 @@ services:
     restart: always
     ports:
       - "6379:6379"
-
-  minio:
-    image: minio/minio
-    container_name: ammighorbani-minio
-    command: server /data --console-address ":9001"
-    restart: always
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: Ammighorbani12
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-
-
-
