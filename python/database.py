@@ -2,10 +2,14 @@ from pymongo import MongoClient
 
 client = MongoClient("mongodb://mongodb:27017")
 
-db = client["chat_app"]
+chat_db = client["chat_app"]
+trade_db = client["madaratrade"]
 
-messages = db["messages"]
-
+<<<<<<< HEAD
 
 messages = db["messages"]
 posts = db["posts"]
+=======
+messages = chat_db["messages"]
+posts = trade_db["posts"]
+>>>>>>> d24f06f (Update / fix)

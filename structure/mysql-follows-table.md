@@ -10,3 +10,20 @@ CREATE TABLE `follows` (
     CONSTRAINT `fk_following` FOREIGN KEY (`following_id`) REFERENCES `users_account`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
+<<<<<<< HEAD
+=======
+
+```bash
+ALTER TABLE follows
+ADD UNIQUE KEY unique_follow_relation (
+    follower_id,
+    following_id
+);
+```
+
+```bash
+ALTER TABLE follows
+ADD INDEX idx_follower_id (follower_id),
+ADD INDEX idx_following_id (following_id);
+```
+>>>>>>> d24f06f (Update / fix)

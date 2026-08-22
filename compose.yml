@@ -37,7 +37,7 @@ services:
     container_name: ammighorbani-fastapi
     restart: always
     ports:
-      - 8000:8000
+      - "8000:8000"
     volumes:
       - ./python:/app
     depends_on:

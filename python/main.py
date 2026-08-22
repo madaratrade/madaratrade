@@ -1,5 +1,9 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, WebSocket, HTTPException
+<<<<<<< HEAD
+=======
+from pymongo import DESCENDING
+>>>>>>> d24f06f (Update / fix)
 from bson import ObjectId
 from database import messages, posts
 from datetime import datetime
@@ -82,10 +86,60 @@ def serialize_post(doc):
 def home():
     return {"status": "chat server running"}
 
+<<<<<<< HEAD
 
 # Get posts by username for profile page
 @app.get("/posts/by-username/{username}")
 def get_posts_by_username(username: str):
+=======
+@app.get("/posts/by-username/{username}")
+def get_posts_by_username(username: str):
+    try:
+        cursor = posts.find(
+            {"username": username}
+        ).sort("created_at", DESCENDING)
+
+        result = []
+
+        for post in cursor:
+            post["_id"] = str(post["_id"])
+            result.append(post)
+
+        print(
+            f"[GET POSTS] username={username!r}, "
+            f"database={posts.database.name}, "
+            f"collection={posts.name}, "
+            f"count={len(result)}"
+        )
+
+        return result
+
+    except Exception as error:
+        print(f"[GET POSTS ERROR] {type(error).__name__}: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve user posts"
+        )
+
+## Get posts by username for profile page
+#@app.get("/posts/by-username/{username}")
+#def get_posts_by_username(username: str):
+#
+#    docs = posts.find({"username": username}).sort("created_at", -1)
+#
+#    result = []
+#    for d in docs:
+#        result.append(serialize_post(d))
+#
+#    return result
+
+
+# Get posts by user_id
+@app.get("/posts/by-user/{user_id}")
+def get_posts_by_user_id(user_id: int):
+
+>>>>>>> d24f06f (Update / fix)
     docs = posts.find({"username": username}).sort("created_at", -1)
 
     result = []
@@ -95,6 +149,7 @@ def get_posts_by_username(username: str):
     return result
 
 
+<<<<<<< HEAD
 # Get posts by user_id
 @app.get("/posts/by-user/{user_id}")
 def get_posts_by_user_id(user_id: int):
@@ -106,6 +161,32 @@ def get_posts_by_user_id(user_id: int):
 
     return result
 
+=======
+@app.get("/posts")
+def list_posts(offset: int = 0, limit: int = 12, viewer_username: Optional[str] = None):
+    try:
+        safe_offset = max(offset, 0)
+        safe_limit = max(1, min(limit, 50))
+
+        cursor = posts.find({}).sort("created_at", DESCENDING).skip(safe_offset).limit(safe_limit)
+        result = []
+
+        for doc in cursor:
+            result.append(serialize_post(doc))
+
+        return {
+            "status": "success",
+            "posts": result,
+            "count": len(result),
+            "offset": safe_offset,
+            "limit": safe_limit,
+            "viewer_username": viewer_username
+        }
+
+    except Exception as error:
+        print(f"[LIST POSTS ERROR] {type(error).__name__}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve posts")
+>>>>>>> d24f06f (Update / fix)
 
 # Get single post by MongoDB ObjectId
 @app.get("/posts/{post_id}")
