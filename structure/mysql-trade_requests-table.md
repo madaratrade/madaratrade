@@ -11,7 +11,11 @@ CREATE TABLE `trade_requests` (
     CONSTRAINT `fk_trade_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `users_account`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 <<<<<<< HEAD
+<<<<<<< HEAD
 ```
 =======
 ```
 >>>>>>> d24f06f (Update / fix)
+=======
+```
+>>>>>>> 9e1b178 (Update / fix)

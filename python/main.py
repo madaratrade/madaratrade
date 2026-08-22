@@ -1,9 +1,13 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, WebSocket, HTTPException
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 from pymongo import DESCENDING
 >>>>>>> d24f06f (Update / fix)
+=======
+from pymongo import DESCENDING
+>>>>>>> 9e1b178 (Update / fix)
 from bson import ObjectId
 from database import messages, posts
 from datetime import datetime
@@ -87,11 +91,14 @@ def home():
     return {"status": "chat server running"}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 # Get posts by username for profile page
 @app.get("/posts/by-username/{username}")
 def get_posts_by_username(username: str):
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 @app.get("/posts/by-username/{username}")
 def get_posts_by_username(username: str):
     try:
@@ -139,7 +146,10 @@ def get_posts_by_username(username: str):
 @app.get("/posts/by-user/{user_id}")
 def get_posts_by_user_id(user_id: int):
 
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
     docs = posts.find({"username": username}).sort("created_at", -1)
 
     result = []
@@ -149,6 +159,7 @@ def get_posts_by_user_id(user_id: int):
     return result
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 # Get posts by user_id
 @app.get("/posts/by-user/{user_id}")
@@ -162,6 +173,8 @@ def get_posts_by_user_id(user_id: int):
     return result
 
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 @app.get("/posts")
 def list_posts(offset: int = 0, limit: int = 12, viewer_username: Optional[str] = None):
     try:
@@ -186,7 +199,10 @@ def list_posts(offset: int = 0, limit: int = 12, viewer_username: Optional[str] 
     except Exception as error:
         print(f"[LIST POSTS ERROR] {type(error).__name__}: {error}")
         raise HTTPException(status_code=500, detail="Failed to retrieve posts")
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
 # Get single post by MongoDB ObjectId
 @app.get("/posts/{post_id}")

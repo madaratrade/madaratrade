@@ -6,6 +6,7 @@ chat_db = client["chat_app"]
 trade_db = client["madaratrade"]
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 messages = db["messages"]
 posts = db["posts"]
@@ -13,3 +14,7 @@ posts = db["posts"]
 messages = chat_db["messages"]
 posts = trade_db["posts"]
 >>>>>>> d24f06f (Update / fix)
+=======
+messages = chat_db["messages"]
+posts = trade_db["posts"]
+>>>>>>> 9e1b178 (Update / fix)

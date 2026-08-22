@@ -1,9 +1,14 @@
 <?php
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9e1b178 (Update / fix)
 session_start();
 
 require_once __DIR__ . '/db.php';
 
 if (!isset($conn) || !$conn) {
+<<<<<<< HEAD
     die("Database connection not initialized.");
 }
 
@@ -21,6 +26,8 @@ function fetchPostsFromApi($username) {
     ]);
 
     $response = @file_get_contents($apiUrl, false, $context);
+=======
+>>>>>>> 9e1b178 (Update / fix)
     die('Database connection not initialized.');
 }
 
@@ -249,11 +256,16 @@ function fetchPostsFromApi(string $username): array
     }
 
     $decoded = json_decode($response, true);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9e1b178 (Update / fix)
     if (!is_array($decoded)) {
         $result['apiError'] = true;
         return $result;
     }
 
+<<<<<<< HEAD
     $result['posts'] = $decoded;
     $result['postsCount'] = count($decoded);
     return $result;
@@ -262,6 +274,8 @@ function fetchPostsFromApi(string $username): array
 $profileUsername = isset($_GET['username']) ? trim($_GET['username']) : '';
 $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $currentUsername = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
+=======
+>>>>>>> 9e1b178 (Update / fix)
     if (isset($decoded['posts']) && is_array($decoded['posts'])) {
         $result['posts'] = $decoded['posts'];
     } else {
@@ -368,7 +382,10 @@ $sql = "
         ui.instagram_link,
         COALESCE(ui.balance, 0.00) AS balance
     FROM users_account ua
+<<<<<<< HEAD
     LEFT JOIN users_info ui ON ui.user_id = ua.id
+=======
+>>>>>>> 9e1b178 (Update / fix)
     LEFT JOIN users_info ui
         ON ui.user_id = ua.id
     WHERE ua.username = ?
@@ -376,6 +393,7 @@ $sql = "
 ";
 
 $stmt = $conn->prepare($sql);
+<<<<<<< HEAD
 <<<<<<< HEAD
 $stmt->bind_param('s', $profileUsername);
 $stmt->execute();
@@ -421,6 +439,8 @@ $shareUrl = 'https://madaratrade.com/@' . urlencode($profile['username']);
 ?>
 
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
 if (!$stmt) {
     die('Unable to prepare profile query.');
@@ -717,13 +737,17 @@ $shareUrl = 'https://madaratrade.com/@' .
     rawurlencode($profile['username']);
 
 ?>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($profile['username']) ?> - MadaraTrade</title>
+<<<<<<< HEAD
 <<<<<<< HEAD
     <style>
         :root {
@@ -802,6 +826,8 @@ $shareUrl = 'https://madaratrade.com/@' .
         }
 
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
     <style>
         :root {
@@ -1572,27 +1598,37 @@ $shareUrl = 'https://madaratrade.com/@' .
                 height: min(520px, calc(100vh - 190px));
             }
         }
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
     </style>
 </head>
 <body>
 
 <div class="container">
 <<<<<<< HEAD
+<<<<<<< HEAD
     <div class="topbar" style="display:flex; justify-content:space-between; margin-bottom:20px; align-items: center;">
         <!-- بخش Madara آبی شد -->
         <div style="font-size:24px; font-weight:900;"><span style="color:var(--cyan)">Madara</span>Trade</div>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
     <div class="topbar">
         <div class="brand">
             <span class="brand-accent">Madara</span>Trade
         </div>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
         <a class="btn" href="home.php">Back</a>
     </div>
 
     <div class="hero">
+<<<<<<< HEAD
 <<<<<<< HEAD
         <div class="panel" style="text-align:center;">
             <div class="avatar-wrapper">
@@ -1621,6 +1657,8 @@ $shareUrl = 'https://madaratrade.com/@' .
                             <input type="hidden" name="action" value="toggle_follow">
                             <button type="submit" class="btn <?= $isFollowing ? '' : 'btn-primary' ?>">
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
         <div class="panel profile-summary">
             <!-- Clicking on this avatar wrapper toggles the corresponding modal -->
@@ -1679,24 +1717,34 @@ $shareUrl = 'https://madaratrade.com/@' .
                                 type="submit"
                                 class="btn <?= $isFollowing ? 'btn-danger' : 'btn-primary' ?>"
                             >
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
                                 <?= $isFollowing ? 'Unfollow' : 'Follow' ?>
                             </button>
                         </form>
                     <?php endif; ?>
 <<<<<<< HEAD
+<<<<<<< HEAD
 		    <button class="btn" onclick="openModal('share-modal')">Share</button>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
                     <button type="button" class="btn" onclick="openModal('share-modal')">
                         Share
                     </button>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
                 </div>
             </div>
 
             <div class="stats">
                 <div class="stat">
+<<<<<<< HEAD
 <<<<<<< HEAD
                     <div style="color:var(--muted); font-size:13px;">Posts</div>
                     <div class="stat-value"><?= (int)$postsCount ?></div>
@@ -1730,6 +1778,8 @@ $shareUrl = 'https://madaratrade.com/@' .
                         </div>
                     </div>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
                     <div class="stat-label">Posts</div>
                     <div class="stat-value"><?= (int)$postsCount ?></div>
                 </div>
@@ -1818,7 +1868,10 @@ $shareUrl = 'https://madaratrade.com/@' .
                     <?php if ($postUrl !== ''): ?>
                         </a>
                     <?php endif; ?>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
@@ -1830,6 +1883,7 @@ $shareUrl = 'https://madaratrade.com/@' .
     </div>
 </div>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <!-- Profile Modal -->
 <div id="profile-modal" class="modal-overlay" style="display:none;">
@@ -1844,6 +1898,8 @@ $shareUrl = 'https://madaratrade.com/@' .
                     <a href="update_bio.php">Edit Profile</a>
                     <a href="logout.php" style="color:#ff5e5e;">Logout</a>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 <!-- Followers / Following modal -->
 <div
     id="follow-modal"
@@ -1987,12 +2043,16 @@ $shareUrl = 'https://madaratrade.com/@' .
                 <div id="menu-content" class="dropdown-content">
                     <a href="#" onclick="triggerUpload(); return false;">Add Photo</a>
                     <a href="logout.php" style="color: #ff5e5e;">Logout</a>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
                 </div>
             </div>
         </div>
 
         <div class="profile-main">
+<<<<<<< HEAD
 <<<<<<< HEAD
             <div style="position:relative; width:100px; margin:0 auto;">
                 <img id="user-avatar" src="<?= h($profile['avatar']) ?>" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border: 2px solid var(--cyan);">
@@ -2001,6 +2061,8 @@ $shareUrl = 'https://madaratrade.com/@' .
             <h3 style="margin: 15px 0 5px;"><?= h($displayName) ?></h3>
             <p style="color:#888; margin: 0;">@<?= h($profile['username']) ?> | <span style="color: var(--cyan);">$<?= number_format($profile['balance'], 2) ?></span></p>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
             <div style="position: relative; width: 100px; margin: 0 auto;">
                 <img
                     id="user-avatar"
@@ -2025,12 +2087,16 @@ $shareUrl = 'https://madaratrade.com/@' .
             <p style="color: #888; margin: 0;">
                 @<?= h($profile['username']) ?> | <span style="color: var(--cyan); font-weight: bold;">$<?= number_format((float)$profile['balance'], 2) ?></span>
             </p>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
         </div>
 
         <div class="profile-list">
             <div class="list-item">
                 <span class="item-icon">ℹ️</span>
+<<<<<<< HEAD
 <<<<<<< HEAD
                 <div><small style="color:#888; display:block;">About</small><span><?= nl2br(h($profile['bio'])) ?></span></div>
             </div>
@@ -2038,6 +2104,8 @@ $shareUrl = 'https://madaratrade.com/@' .
                 <span class="item-icon">💰</span>
                 <div><small style="color:#888; display:block;">Wallet Balance</small><span style="color: var(--cyan); font-weight: bold;">$<?= number_format($profile['balance'], 2) ?></span></div>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
                 <div style="width: 100%;">
                     <small style="color: #888; display: block; margin-bottom: 2px;">About</small>
                     <?php if ($isOwnProfile): ?>
@@ -2067,12 +2135,16 @@ $shareUrl = 'https://madaratrade.com/@' .
                     <small style="color: #888; display: block;">Wallet Balance</small>
                     <span style="color: var(--cyan); font-weight: bold;">$<?= number_format((float)$profile['balance'], 2) ?></span>
                 </div>
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
             </div>
         </div>
     </div>
 </div>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <input type="file" id="photo-input" style="display:none" accept="image/*" onchange="uploadPhoto(this)">
 
@@ -2175,6 +2247,8 @@ function fallbackCopy(input) {
 }
 </script>
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 <input
     type="file"
     id="photo-input"

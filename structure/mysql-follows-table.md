@@ -11,7 +11,10 @@ CREATE TABLE `follows` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 9e1b178 (Update / fix)
 
 ```bash
 ALTER TABLE follows
@@ -26,4 +29,7 @@ ALTER TABLE follows
 ADD INDEX idx_follower_id (follower_id),
 ADD INDEX idx_following_id (following_id);
 ```
+<<<<<<< HEAD
 >>>>>>> d24f06f (Update / fix)
+=======
+>>>>>>> 9e1b178 (Update / fix)
