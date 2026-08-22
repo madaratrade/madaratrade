@@ -1,14 +1,9 @@
 <?php
-<<<<<<< HEAD
-=======
-
->>>>>>> d24f06f (Update / fix)
 session_start();
 
 require_once __DIR__ . '/db.php';
 
 if (!isset($conn) || !$conn) {
-<<<<<<< HEAD
     die("Database connection not initialized.");
 }
 
@@ -26,7 +21,6 @@ function fetchPostsFromApi($username) {
     ]);
 
     $response = @file_get_contents($apiUrl, false, $context);
-=======
     die('Database connection not initialized.');
 }
 
@@ -249,23 +243,17 @@ function fetchPostsFromApi(string $username): array
 
     $response = @file_get_contents($apiUrl, false, $context);
 
->>>>>>> d24f06f (Update / fix)
     if ($response === false) {
         $result['apiError'] = true;
         return $result;
     }
 
     $decoded = json_decode($response, true);
-<<<<<<< HEAD
-=======
-
->>>>>>> d24f06f (Update / fix)
     if (!is_array($decoded)) {
         $result['apiError'] = true;
         return $result;
     }
 
-<<<<<<< HEAD
     $result['posts'] = $decoded;
     $result['postsCount'] = count($decoded);
     return $result;
@@ -274,7 +262,6 @@ function fetchPostsFromApi(string $username): array
 $profileUsername = isset($_GET['username']) ? trim($_GET['username']) : '';
 $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $currentUsername = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
-=======
     if (isset($decoded['posts']) && is_array($decoded['posts'])) {
         $result['posts'] = $decoded['posts'];
     } else {
@@ -354,7 +341,6 @@ $currentUserId = isset($_SESSION['user_id'])
 $currentUsername = isset($_SESSION['username'])
     ? trim((string)$_SESSION['username'])
     : '';
->>>>>>> d24f06f (Update / fix)
 
 if ($profileUsername === '') {
     if ($currentUsername !== '') {
@@ -364,15 +350,12 @@ if ($profileUsername === '') {
     }
 }
 
-<<<<<<< HEAD
-=======
 /*
 |--------------------------------------------------------------------------
 | Load profile
 |--------------------------------------------------------------------------
 */
 
->>>>>>> d24f06f (Update / fix)
 $sql = "
     SELECT
         ua.id AS user_id,
@@ -385,12 +368,9 @@ $sql = "
         ui.instagram_link,
         COALESCE(ui.balance, 0.00) AS balance
     FROM users_account ua
-<<<<<<< HEAD
     LEFT JOIN users_info ui ON ui.user_id = ua.id
-=======
     LEFT JOIN users_info ui
         ON ui.user_id = ua.id
->>>>>>> d24f06f (Update / fix)
     WHERE ua.username = ?
     LIMIT 1
 ";
@@ -2458,6 +2438,5 @@ function fallbackCopy(input) {
     }
 </script>
 
->>>>>>> d24f06f (Update / fix)
 </body>
 </html>
